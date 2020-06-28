@@ -5,9 +5,9 @@ new Vue({
         ws: null, // Our websocket
         newMsg: '', // Holds new messages to be sent to the server
         chatContent: '', // A running list of chat messages displayed on the screen
-        email: null, // Email address used for grabbing an avatar
+        avatar: null, // avatar address used for grabbing an avatar
         username: null, // Our username
-        joined: false // True if email and username have been filled in
+        joined: false // True if avatar and username have been filled in
     },
     created: function() {
         var self = this;
@@ -15,7 +15,7 @@ new Vue({
         this.ws.addEventListener('message', function(e) {
             var msg = JSON.parse(e.data);
             self.chatContent += '<div class="chip">'
-                    + '<img src="' + self.gravatarURL(msg.email) + '">' // Avatar
+                    + '<img src="' + self.avatarURL(msg.avatar) + '">' // Avatar
                     + msg.username
                 + '</div>'
                 + emojione.toImage(msg.message) + '<br/>'; // Parse emojis
@@ -29,7 +29,7 @@ new Vue({
             if (this.newMsg != '') {
                 this.ws.send(
                     JSON.stringify({
-                        email: this.email,
+                        avatar: this.avatar,
                         username: this.username,
                         message: $('<p>').html(this.newMsg).text() // Strip out html
                     }
@@ -38,20 +38,27 @@ new Vue({
             }
         },
         join: function () {
-            if (!this.email) {
-                Materialize.toast('You must enter an email', 2000);
-                return
-            }
             if (!this.username) {
                 Materialize.toast('You must choose a username', 2000);
                 return
-            }
-            this.email = $('<p>').html(this.email).text();
+            };
+            this.ws.send(
+                JSON.stringify({
+                        avatar: this.avatar,
+                        username: this.username,
+                        message: ""
+                })
+            );
+            this.avatar = $('<p>').html(this.avatar).text();
             this.username = $('<p>').html(this.username).text();
             this.joined = true;
         },   
-        gravatarURL: function(email) {
-            return 'http://www.gravatar.com/avatar/' + CryptoJS.MD5(email);
+        avatarURL: function(avatar) {
+             if (avatar.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+                return avatar;
+            } else {
+                return "avatar.jpg"
+            }
         }
     }
 });
