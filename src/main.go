@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 )
 
 var (
+	allUsers  AllUsers
 	clients   = make(map[*websocket.Conn]bool) // client connections map
 	broadcast = make(chan Message)             // Broadcast Channel
 	// configure the upgrader
@@ -18,8 +20,19 @@ var (
 	}
 )
 
+type User struct {
+	Username string `json:"user"`
+	Avatar   string `json:"avatar"`
+}
+
+// AllUsers holds all the users in a string array
+type AllUsers struct {
+	Users []User `json:"users"`
+}
+
+// Message holds the values for each message
 type Message struct {
-	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
 	Username string `json:"username"`
 	Message  string `json:"message"`
 }
@@ -40,10 +53,12 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	for {
 		var msg Message
 
-		// read new msg in as JSON, and initialize is as a Message object
+		// read new msg in as JSON, and initialize it as a Message object
 		err := ws.ReadJSON(&msg)
+
 		if err != nil {
 			log.Printf("ConnectionHandlerMsg: %v", err)
+
 			delete(clients, ws)
 			break
 		}
@@ -56,6 +71,14 @@ func handleMessages() {
 	for {
 		msg := <-broadcast
 
+		if msg.Message == "" {
+			usr := User{Username: msg.Username, Avatar: msg.Avatar}
+			users := append(allUsers.Users, usr)
+			msg.Message = fmt.Sprintf("NEW USER JOINED!!!!! WELCOME %s", usr.Username)
+			msg.Username = "ATTENTION!"
+			msg.Avatar = "red-alert.png"
+			fmt.Println(users)
+		}
 		for client := range clients {
 			err := client.WriteJSON(msg)
 			if err != nil {
