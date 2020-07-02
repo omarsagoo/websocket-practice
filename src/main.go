@@ -38,6 +38,10 @@ type Message struct {
 }
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("starthere")
+	uuid1 := r.FormValue("uuidcode")
+	fmt.Println(uuid1, "start")
+
 	// upgrade Get request to websocket
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -98,7 +102,7 @@ func main() {
 	// create file server
 	fs := http.FileServer(http.Dir("../public"))
 	http.Handle("/", fs)
-
+	http.ListenAndServe("/", fs)
 	// configure websocket route
 	http.HandleFunc("/ws", handleConnections)
 

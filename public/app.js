@@ -7,11 +7,12 @@ new Vue({
         chatContent: '', // A running list of chat messages displayed on the screen
         avatar: null, // avatar address used for grabbing an avatar
         username: null, // Our username
-        joined: false // True if avatar and username have been filled in
+        joined: false, // True if avatar and username have been filled in
+        uuid: null // Unique identifier for each individual room
     },
     created: function() {
         var self = this;
-        this.ws = new WebSocket('ws://' + window.location.host + '/ws');
+        this.ws = new WebSocket('ws://' + window.location.host + '/ws/' + this.uuid);
         this.ws.addEventListener('message', function(e) {
             var msg = JSON.parse(e.data);
             self.chatContent += '<div class="chip">'
@@ -38,6 +39,10 @@ new Vue({
             }
         },
         join: function () {
+            if(!this.uuid){
+                Materialize.toast('You must enter a uuid code for the room you would like to join', 2000);
+                return
+            }
             if (!this.username) {
                 Materialize.toast('You must choose a username', 2000);
                 return
@@ -62,3 +67,19 @@ new Vue({
         }
     }
 });
+
+$(document).ready(function(){
+    $('.modal').modal();
+  });
+
+document.getElementById("UUIDoutput").innerHTML = create_UUID();
+
+function create_UUID(){
+    var dt = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (dt + Math.random()*16)%16 | 0;
+        dt = Math.floor(dt/16);
+        return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+}
