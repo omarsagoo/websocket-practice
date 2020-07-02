@@ -59,6 +59,10 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("ConnectionHandlerMsg: %v", err)
 
+			if websocket.IsCloseError(err, 1001) {
+				broadcast <- Message{Username: "ATTENTION!", Avatar: "red-alert.png", Message: "Someone left the chat."}
+			}
+
 			delete(clients, ws)
 			break
 		}
@@ -73,11 +77,11 @@ func handleMessages() {
 
 		if msg.Message == "" {
 			usr := User{Username: msg.Username, Avatar: msg.Avatar}
-			users := append(allUsers.Users, usr)
+			// users := append(allUsers.Users, usr)
 			msg.Message = fmt.Sprintf("NEW USER JOINED!!!!! WELCOME %s", usr.Username)
 			msg.Username = "ATTENTION!"
 			msg.Avatar = "red-alert.png"
-			fmt.Println(users)
+			// fmt.Println(users)
 		}
 		for client := range clients {
 			err := client.WriteJSON(msg)
